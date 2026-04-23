@@ -1,0 +1,35 @@
+# Environment / secrets
+.env
+
+# Model weights (large binary files — download on first run)
+models/
+*.pkl
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Temporary processing files
+/data/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Tests
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp

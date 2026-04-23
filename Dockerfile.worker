@@ -1,0 +1,35 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    git \
+    build-essential \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# PyTorch (CPU by default; override with GPU image at build time)
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Core Python ML dependencies
+COPY requirements-worker.txt .
+RUN pip install --no-cache-dir -r requirements-worker.txt
+
+# CleanUNet — no PyPI package; clone and add to PYTHONPATH
+RUN git clone --depth 1 https://github.com/NVIDIA/CleanUNet.git /opt/CleanUNet
+ENV PYTHONPATH="/opt/CleanUNet:${PYTHONPATH}"
+
+# Aero (Meta) fallback denoiser — no PyPI package
+RUN git clone --depth 1 https://github.com/facebookresearch/aero.git /opt/aero \
+    && pip install --no-cache-dir -e /opt/aero
+
+# Application code
+COPY app/ ./app/
+COPY pipeline/ ./pipeline/
+
+ENV PYTHONPATH="/app:/opt/CleanUNet:${PYTHONPATH}"
+ENV HF_HOME=/models
+
+CMD ["python", "-m", "pipeline.worker"]

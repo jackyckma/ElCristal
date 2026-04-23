@@ -1,0 +1,15 @@
+# Worker container dependencies (heavy ML stack)
+# torch and torchaudio are installed separately in Dockerfile.worker
+# to allow easy CPU/GPU variant selection
+
+demucs>=4.0
+audiosr>=0.0.5
+pyloudnorm>=0.1.1
+soundfile>=0.12
+pydub>=0.25
+ffmpeg-python>=0.2
+numpy>=1.24
+scipy>=1.11
+redis>=5.0
+rq>=1.16
+huggingface_hub>=0.20

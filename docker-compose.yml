@@ -1,0 +1,74 @@
+version: "3.9"
+
+x-common-env: &common-env
+  REDIS_URL: redis://redis:6379
+  STORAGE_DIR: /data
+  MODEL_CACHE_DIR: /models
+  BASE_URL: ${BASE_URL:-http://localhost:7860}
+  USE_GPU: ${USE_GPU:-false}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USER: ${SMTP_USER:-}
+  SMTP_PASS: ${SMTP_PASS:-}
+  MAX_FILE_SIZE_MB: ${MAX_FILE_SIZE_MB:-100}
+  MAX_BATCH_SIZE: ${MAX_BATCH_SIZE:-50}
+  OUTPUT_TTL_HOURS: ${OUTPUT_TTL_HOURS:-72}
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: elcristal-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    container_name: elcristal-web
+    restart: unless-stopped
+    ports:
+      - "7860:7860"
+    environment:
+      <<: *common-env
+    volumes:
+      - elcristal-data:/data
+      - elcristal-models:/models
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: elcristal-worker
+    restart: unless-stopped
+    environment:
+      <<: *common-env
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-1}
+    volumes:
+      - elcristal-data:/data
+      - elcristal-models:/models
+    depends_on:
+      redis:
+        condition: service_healthy
+    # Uncomment to enable GPU support (requires nvidia-container-toolkit):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  redis-data:
+  elcristal-data:
+  elcristal-models:
