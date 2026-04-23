@@ -32,11 +32,9 @@ def queue_job(
     job_id = str(uuid.uuid4())
     q = _get_queue()
 
-    # Import here to avoid circular deps; worker module is only needed in the worker container
-    from pipeline.worker import process_track  # noqa: PLC0415
-
+    # Use string path so the web container never needs to import the worker/ML modules
     job = q.enqueue(
-        process_track,
+        "pipeline.worker.process_track",
         kwargs={
             "job_id": job_id,
             "input_path": str(input_path),
