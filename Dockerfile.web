@@ -1,0 +1,22 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python dependencies (web-only: no heavy ML packages)
+COPY requirements-web.txt .
+RUN pip install --no-cache-dir -r requirements-web.txt
+
+# Application code
+COPY app/ ./app/
+COPY pipeline/__init__.py ./pipeline/__init__.py
+COPY pipeline/worker.py ./pipeline/worker.py
+
+ENV PYTHONPATH=/app
+
+EXPOSE 7860
+CMD ["python", "-m", "app.main"]
