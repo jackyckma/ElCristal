@@ -12,4 +12,4 @@ numpy>=1.24
 scipy>=1.11
 redis>=5.0
 rq>=1.16
-huggingface_hub>=0.20
+huggingface_hub>=0.19.3,<1.0
