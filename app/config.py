@@ -18,7 +18,7 @@ MODEL_CACHE_DIR: Path = Path(os.getenv("MODEL_CACHE_DIR", "/models"))
 
 REDIS_URL: str = os.getenv("REDIS_URL", "redis://redis:6379")
 
-STORAGE_DIR: Path = Path(os.getenv("STORAGE_DIR", "/data"))
+STORAGE_DIR: Path = Path(os.getenv("STORAGE_DIR", "/tmp/elcristal"))
 INPUT_DIR: Path = STORAGE_DIR / "inputs"
 OUTPUT_DIR: Path = STORAGE_DIR / "outputs"
 

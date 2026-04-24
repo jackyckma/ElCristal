@@ -157,9 +157,10 @@ Processing takes ~20 minutes per track on CPU, ~1–2 minutes with a GPU.
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", "7860"))
     ui = build_ui()
     ui.launch(
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=port,
         show_error=True,
     )
