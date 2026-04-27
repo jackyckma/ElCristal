@@ -23,6 +23,13 @@ def _get_queue() -> Queue:
     return _queue
 
 
+def get_redis() -> Redis:
+    """Return the shared Redis connection (initialising it if needed)."""
+    _get_queue()
+    assert _redis is not None
+    return _redis
+
+
 def queue_job(
     input_path: Path,
     recipient_email: str,

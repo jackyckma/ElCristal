@@ -1,21 +1,54 @@
+# Single-container "inline" image — gradio UI + full ML pipeline in one process.
+# Used by single-service hosts (e.g. Zeabur). For multi-container production
+# deploys, see Dockerfile.web + Dockerfile.worker + docker-compose.yml.
 FROM python:3.11-slim
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
+    git \
+    build-essential \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements-web.txt .
-RUN pip install --no-cache-dir -r requirements-web.txt
+# PyTorch (CPU build; for GPU images override the index URL at build time).
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# Web + worker Python dependencies, deduplicated transparently by pip.
+# AudioSR pins numpy<=1.23.5 which conflicts with the rest of the modern stack,
+# so we strip it here and install it best-effort below; the pipeline falls back
+# to a no-op for stage 3 when audiosr is unavailable.
+COPY requirements-web.txt requirements-worker.txt ./
+RUN grep -v -i '^audiosr' requirements-worker.txt > /tmp/requirements-worker-core.txt \
+    && pip install --no-cache-dir -r requirements-web.txt -r /tmp/requirements-worker-core.txt
+RUN pip install --no-cache-dir --no-deps audiosr \
+    || echo "audiosr install failed — stage 3 (bandwidth extension) will pass through"
+
+# CleanUNet — primary denoiser (no PyPI release; clone and add to PYTHONPATH).
+RUN git clone --depth 1 https://github.com/NVIDIA/CleanUNet.git /opt/CleanUNet
+
+# Aero — secondary denoiser fallback (no PyPI release). The upstream repo has
+# moved/been removed in the past, so we treat this clone as best-effort:
+# denoise.py already falls back to CleanUNet → spectral subtraction.
+RUN (git clone --depth 1 https://github.com/facebookresearch/aero.git /opt/aero \
+    && pip install --no-cache-dir -e /opt/aero) \
+    || echo "aero unavailable — falling back to CleanUNet / spectral subtraction"
 
 COPY app/ ./app/
-# Worker module is referenced by name in RQ enqueue calls — only __init__ needed here
-COPY pipeline/__init__.py ./pipeline/__init__.py
+COPY pipeline/ ./pipeline/
 
-ENV PYTHONPATH=/app
+ENV PYTHONPATH=/app:/opt/CleanUNet
+ENV HF_HOME=/models
+ENV MODEL_CACHE_DIR=/models
+ENV STORAGE_DIR=/data
+# Single-container mode: pipeline runs synchronously in the request handler.
+ENV INLINE_MODE=true
+# Disable gradio's outbound analytics — restricted egress on some hosts blocks them.
+ENV GRADIO_ANALYTICS_ENABLED=False
+
+RUN mkdir -p /data /models
 
 EXPOSE 7860
-
+# Zeabur and friends sometimes set $PORT instead of $GRADIO_SERVER_PORT.
 CMD ["python", "-m", "app.main"]

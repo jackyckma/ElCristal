@@ -1,8 +1,9 @@
 # Web container dependencies (lightweight — no ML)
-gradio>=4.0,<5.0
+# gradio 4.x is incompatible with huggingface_hub >= 1.0 (HfFolder removed),
+# so we require gradio 5.x. huggingface_hub is pulled in transitively by gradio.
+gradio>=5.0,<6.0
 redis>=5.0
 rq>=1.16
 soundfile>=0.12
 numpy>=1.24
 ffmpeg-python>=0.2
-huggingface_hub>=0.20

@@ -16,6 +16,11 @@ WORKER_CONCURRENCY: int = int(os.getenv("WORKER_CONCURRENCY", "1"))
 USE_GPU: bool = os.getenv("USE_GPU", "false").lower() == "true"
 MODEL_CACHE_DIR: Path = Path(os.getenv("MODEL_CACHE_DIR", "/models"))
 
+# Inline mode runs the whole restoration pipeline inside the web request
+# (no Redis, no RQ worker). Intended for single-container deploys (e.g. Zeabur)
+# where provisioning a separate worker + queue is overkill.
+INLINE_MODE: bool = os.getenv("INLINE_MODE", "false").lower() == "true"
+
 REDIS_URL: str = os.getenv("REDIS_URL", "redis://redis:6379")
 
 STORAGE_DIR: Path = Path(os.getenv("STORAGE_DIR", "/tmp/elcristal"))
