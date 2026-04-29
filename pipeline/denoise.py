@@ -34,13 +34,19 @@ def denoise_stems(
     try:
         denoised = _denoise_cleanunet(stem_paths, work_dir, model_cache_dir, device)
         method = "CleanUNet"
-    except (ImportError, ModuleNotFoundError):
-        logger.warning("[denoise] CleanUNet not available — falling back to Aero")
+    except Exception as exc:
+        logger.warning(
+            "[denoise] CleanUNet unavailable/failed (%s) — falling back to Aero",
+            exc,
+        )
         try:
             denoised = _denoise_aero(stem_paths, work_dir, model_cache_dir, device)
             method = "Aero"
-        except (ImportError, ModuleNotFoundError):
-            logger.warning("[denoise] Aero not available — falling back to spectral subtraction")
+        except Exception as aero_exc:
+            logger.warning(
+                "[denoise] Aero unavailable/failed (%s) — falling back to spectral subtraction",
+                aero_exc,
+            )
             denoised = _denoise_spectral(stem_paths, work_dir)
             method = "spectral-subtraction"
 
