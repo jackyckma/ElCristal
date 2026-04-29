@@ -54,31 +54,37 @@ def process_track(
     _safe_report(progress_cb, "starting", 0.0)
 
     try:
-        _safe_report(progress_cb, "stage 1/4 — source separation (Demucs)", 0.05)
+        _safe_report(progress_cb, f"stage 1/4 — source separation ({config.SEPARATION_BACKEND})", 0.05)
         t0 = time.perf_counter()
-        stem_paths = separate.separate(src, work_dir, device=device)
+        stem_paths = separate.separate(
+            src,
+            work_dir,
+            device=device,
+            backend=config.SEPARATION_BACKEND,
+        )
         gc.collect()
         logger.info("[job %s] Stage 1 (separate) completed in %.1fs", job_id, time.perf_counter() - t0)
 
-        _safe_report(progress_cb, "stage 2/4 — denoising (CleanUNet / Aero)", 0.30)
+        _safe_report(progress_cb, f"stage 2/4 — denoising ({config.DENOISE_BACKEND})", 0.30)
         t0 = time.perf_counter()
         denoised_stems = denoise.denoise_stems(
             stem_paths,
             work_dir / "denoised",
             model_cache_dir=config.MODEL_CACHE_DIR,
             device=device,
+            backend=config.DENOISE_BACKEND,
         )
         gc.collect()
         logger.info("[job %s] Stage 2 (denoise) completed in %.1fs", job_id, time.perf_counter() - t0)
 
-        _safe_report(progress_cb, "stage 3/4 — bandwidth extension (AudioSR)", 0.60)
+        _safe_report(progress_cb, f"stage 3/4 — bandwidth extension ({config.BANDWIDTH_BACKEND})", 0.60)
         t0 = time.perf_counter()
         extended_stems = bandwidth.extend_bandwidth(
             denoised_stems,
             work_dir / "bwe",
             model_cache_dir=config.MODEL_CACHE_DIR,
             device=device,
-            enabled=True,
+            backend=config.BANDWIDTH_BACKEND,
         )
         gc.collect()
         logger.info("[job %s] Stage 3 (bandwidth) completed in %.1fs", job_id, time.perf_counter() - t0)

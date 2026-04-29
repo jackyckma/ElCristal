@@ -6,6 +6,9 @@ x-common-env: &common-env
   MODEL_CACHE_DIR: /models
   BASE_URL: ${BASE_URL:-http://localhost:7860}
   USE_GPU: ${USE_GPU:-false}
+  SEPARATION_BACKEND: ${SEPARATION_BACKEND:-demucs}
+  DENOISE_BACKEND: ${DENOISE_BACKEND:-auto}
+  BANDWIDTH_BACKEND: ${BANDWIDTH_BACKEND:-auto}
   SMTP_HOST: ${SMTP_HOST:-}
   SMTP_PORT: ${SMTP_PORT:-587}
   SMTP_USER: ${SMTP_USER:-}

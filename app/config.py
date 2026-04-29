@@ -16,6 +16,12 @@ WORKER_CONCURRENCY: int = int(os.getenv("WORKER_CONCURRENCY", "1"))
 USE_GPU: bool = os.getenv("USE_GPU", "false").lower() == "true"
 MODEL_CACHE_DIR: Path = Path(os.getenv("MODEL_CACHE_DIR", "/models"))
 
+# Pipeline backend switches (phase B modularization).
+# These let us swap/tune individual stages without changing orchestration code.
+SEPARATION_BACKEND: str = os.getenv("SEPARATION_BACKEND", "demucs").lower()
+DENOISE_BACKEND: str = os.getenv("DENOISE_BACKEND", "auto").lower()
+BANDWIDTH_BACKEND: str = os.getenv("BANDWIDTH_BACKEND", "auto").lower()
+
 # Inline mode runs the whole restoration pipeline inside the web request
 # (no Redis, no RQ worker). Intended for single-container deploys (e.g. Zeabur)
 # where provisioning a separate worker + queue is overkill.

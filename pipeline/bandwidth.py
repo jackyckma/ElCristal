@@ -16,7 +16,7 @@ def extend_bandwidth(
     work_dir: Path,
     model_cache_dir: Path,
     device: str = "cpu",
-    enabled: bool = True,
+    backend: str = "auto",
 ) -> dict[str, Path]:
     """Stage 3 — Bandwidth extension via AudioSR.
 
@@ -24,7 +24,7 @@ def extend_bandwidth(
     (~8 kHz on 78rpm sources). If AudioSR is unavailable or enabled=False,
     the input stems are returned as-is.
     """
-    if not enabled:
+    if backend in {"passthrough", "disabled", "none"}:
         logger.info("[bandwidth] Stage disabled — passing stems through unchanged")
         return stem_paths
 
@@ -33,11 +33,16 @@ def extend_bandwidth(
 
     t0 = time.perf_counter()
 
-    try:
+    if backend == "audiosr":
         result = _extend_audiosr(stem_paths, work_dir, model_cache_dir, device)
-    except (ImportError, ModuleNotFoundError):
-        logger.warning("[bandwidth] AudioSR not installed — skipping bandwidth extension")
-        return stem_paths
+    elif backend == "auto":
+        try:
+            result = _extend_audiosr(stem_paths, work_dir, model_cache_dir, device)
+        except (ImportError, ModuleNotFoundError):
+            logger.warning("[bandwidth] AudioSR not installed — skipping bandwidth extension")
+            return stem_paths
+    else:
+        raise ValueError(f"Unsupported bandwidth backend: {backend}")
 
     elapsed = time.perf_counter() - t0
     logger.info("[bandwidth] Done in %.1fs", elapsed)

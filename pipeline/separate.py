@@ -20,6 +20,7 @@ def separate(
     input_path: Path,
     work_dir: Path,
     device: str = "cpu",
+    backend: str = "demucs",
 ) -> dict[str, Path]:
     """Stage 1 — Source separation via Demucs htdemucs.
 
@@ -31,6 +32,14 @@ def separate(
     work_dir.mkdir(parents=True, exist_ok=True)
 
     t0 = time.perf_counter()
+    if backend == "passthrough":
+        logger.info("[separate] backend=passthrough — writing input as single 'other' stem")
+        out_path = work_dir / f"{input_path.stem}__other.wav"
+        shutil.copy2(input_path, out_path)
+        return {"other": out_path}
+    if backend != "demucs":
+        raise ValueError(f"Unsupported separation backend: {backend}")
+
     logger.info("[separate] Loading Demucs %s on %s for: %s", DEMUCS_MODEL, device, input_path.name)
 
     stem_paths: dict[str, Path] = {}

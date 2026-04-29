@@ -41,6 +41,16 @@ open http://localhost:7860
 
 The first run downloads model weights (~5 GB) to the `elcristal-models` Docker volume.
 
+### Fast iteration workflow (modular services)
+
+The stack is split into independent services:
+
+- `web`: Gradio frontend + queue client (fast build/redeploy)
+- `worker`: heavy ML runtime (slow build, changes less often)
+- `redis`: queue broker
+
+So UI-only changes do **not** require rebuilding the heavy worker image.
+
 ---
 
 ## Configuration
@@ -57,6 +67,22 @@ All settings live in `.env` (copy from `.env.example`):
 | `OUTPUT_TTL_HOURS` | `72` | Hours before output files are deleted |
 | `USE_GPU` | `false` | Set `true` to enable CUDA (see GPU section) |
 | `BASE_URL` | `http://localhost:7860` | Public URL used in notification emails |
+| `SEPARATION_BACKEND` | `demucs` | `demucs` or `passthrough` |
+| `DENOISE_BACKEND` | `auto` | `auto`, `cleanunet`, `aero`, `spectral`, `passthrough` |
+| `BANDWIDTH_BACKEND` | `auto` | `auto`, `audiosr`, `passthrough` |
+
+### Stage backend selection
+
+You can tune/replace stages independently via environment variables:
+
+```bash
+# examples
+SEPARATION_BACKEND=demucs
+DENOISE_BACKEND=spectral
+BANDWIDTH_BACKEND=passthrough
+```
+
+This lets you iterate on one component at a time without touching orchestration.
 
 ---
 

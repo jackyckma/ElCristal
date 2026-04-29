@@ -20,6 +20,7 @@ def denoise_stems(
     work_dir: Path,
     model_cache_dir: Path,
     device: str = "cpu",
+    backend: str = "auto",
 ) -> dict[str, Path]:
     """Stage 2 — Denoise each stem with CleanUNet (Aero as fallback).
 
@@ -31,24 +32,40 @@ def denoise_stems(
 
     t0 = time.perf_counter()
 
-    try:
+    if backend == "passthrough":
+        logger.info("[denoise] backend=passthrough — returning stems unchanged")
+        return stem_paths
+
+    if backend == "cleanunet":
         denoised = _denoise_cleanunet(stem_paths, work_dir, model_cache_dir, device)
         method = "CleanUNet"
-    except Exception as exc:
-        logger.warning(
-            "[denoise] CleanUNet unavailable/failed (%s) — falling back to Aero",
-            exc,
-        )
+    elif backend == "aero":
+        denoised = _denoise_aero(stem_paths, work_dir, model_cache_dir, device)
+        method = "Aero"
+    elif backend == "spectral":
+        denoised = _denoise_spectral(stem_paths, work_dir)
+        method = "spectral-subtraction"
+    elif backend == "auto":
         try:
-            denoised = _denoise_aero(stem_paths, work_dir, model_cache_dir, device)
-            method = "Aero"
-        except Exception as aero_exc:
+            denoised = _denoise_cleanunet(stem_paths, work_dir, model_cache_dir, device)
+            method = "CleanUNet"
+        except Exception as exc:
             logger.warning(
-                "[denoise] Aero unavailable/failed (%s) — falling back to spectral subtraction",
-                aero_exc,
+                "[denoise] CleanUNet unavailable/failed (%s) — falling back to Aero",
+                exc,
             )
-            denoised = _denoise_spectral(stem_paths, work_dir)
-            method = "spectral-subtraction"
+            try:
+                denoised = _denoise_aero(stem_paths, work_dir, model_cache_dir, device)
+                method = "Aero"
+            except Exception as aero_exc:
+                logger.warning(
+                    "[denoise] Aero unavailable/failed (%s) — falling back to spectral subtraction",
+                    aero_exc,
+                )
+                denoised = _denoise_spectral(stem_paths, work_dir)
+                method = "spectral-subtraction"
+    else:
+        raise ValueError(f"Unsupported denoise backend: {backend}")
 
     elapsed = time.perf_counter() - t0
     logger.info("[denoise] Done (%s) in %.1fs", method, elapsed)
