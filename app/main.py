@@ -533,12 +533,14 @@ Last update: {today}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "7860"))
+    favicon_path = Path(__file__).parent / "assets" / "favicon.png"
     ui = build_ui()
     ui.launch(
         server_name="0.0.0.0",
         server_port=port,
         show_error=True,
         show_api=False,
+        favicon_path=str(favicon_path),
         # Gradio serves downloadable files via its cache and blocks paths outside
         # cwd/tmp unless explicitly allowlisted.
         allowed_paths=[str(config.OUTPUT_DIR)],
