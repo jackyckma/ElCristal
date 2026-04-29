@@ -7,6 +7,7 @@ import shutil
 import threading
 import time
 import uuid
+from datetime import date
 from pathlib import Path
 from typing import Iterator
 
@@ -340,14 +341,75 @@ def _ready_outputs(track_states: list[dict]) -> list[str] | None:
 
 
 def build_ui() -> gr.Blocks:
-    with gr.Blocks(title="ElCristal — Tango Audio Restoration", theme=gr.themes.Soft()) as app:
-        mode_label = "inline" if config.INLINE_MODE else "queued"
+    tango_css = """
+    :root {
+      --ec-bg: #141112;
+      --ec-surface: #201819;
+      --ec-surface-2: #2a1f20;
+      --ec-accent: #b88a44;
+      --ec-text: #f3e8d4;
+      --ec-text-soft: #d8c8ad;
+    }
+
+    body, .gradio-container {
+      background:
+        radial-gradient(circle at 10% 10%, rgba(184, 138, 68, 0.10), transparent 35%),
+        radial-gradient(circle at 90% 20%, rgba(110, 35, 38, 0.16), transparent 45%),
+        var(--ec-bg) !important;
+      color: var(--ec-text) !important;
+    }
+
+    .gradio-container .gr-block,
+    .gradio-container .gr-box,
+    .gradio-container .gr-panel {
+      background: var(--ec-surface);
+      border-color: #3a2b2c !important;
+    }
+
+    .gradio-container h1, .gradio-container h2, .gradio-container h3 {
+      color: var(--ec-text);
+    }
+
+    .gradio-container p, .gradio-container li {
+      color: var(--ec-text-soft);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg, #7d1f24, #b33b2f) !important;
+      border: 1px solid #d07d53 !important;
+      color: #fff7eb !important;
+    }
+
+    .ec-footer {
+      margin-top: 0.8rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid #4a3839;
+      font-size: 0.95rem;
+      color: var(--ec-text-soft);
+    }
+
+    .ec-footer a {
+      color: #e3b267 !important;
+      text-decoration: none;
+    }
+
+    .ec-footer a:hover {
+      text-decoration: underline;
+    }
+    """
+
+    with gr.Blocks(
+        title="ElCristal — Tango Audio Restoration",
+        theme=gr.themes.Soft(),
+        css=tango_css,
+    ) as app:
+        today = date.today().isoformat()
         gr.Markdown(
             f"""
-# ElCristal — Tango Audio Restoration (test mode · {mode_label})
+# ElCristal — Tango Audio Restoration
 
-Restore golden-age tango recordings (1930s–1950s) using modern AI.
-Removes hiss, crackle and noise — without altering the musical character of the original.
+Restore golden-age tango recordings (1930s-1950s) with a restoration pipeline
+designed to reduce noise while preserving musical character and emotional texture.
 
 Upload one or more tracks. The page will stay open while your files are processed
 and offer them as direct downloads when ready. **No email required.**
@@ -386,21 +448,33 @@ and offer them as direct downloads when ready. **No email required.**
             outputs=[status_output, download_output],
         )
 
+        with gr.Accordion("About this project: approach and roadmap", open=False):
+            gr.Markdown(
+                """
+### Technical approach
+
+ElCristal currently uses a four-stage restoration flow:
+
+1. **Source separation** (Demucs) - isolate stems so each component can be treated more precisely.
+2. **Denoising** (CleanUNet with fallbacks) - reduce hiss, crackle and broadband artifacts.
+3. **Bandwidth extension** (AudioSR with graceful fallback) - recover high-frequency detail when available.
+4. **Loudness normalization** (EBU R128) - produce consistent output level for listening and publishing.
+
+### Future directions
+
+- Fine-tune denoising for tango-era noise profiles and instrument timbre (especially bandoneon).
+- Add quality presets (conservative / balanced / aggressive) and faster preview mode.
+- Improve batch workflow with progress history and optional per-stage bypass controls.
+"""
+            )
+
         gr.Markdown(
-            """
----
-### About ElCristal
-
-ElCristal uses a four-stage AI pipeline:
-
-1. **Source separation** (Demucs) — isolates stems for cleaner per-stem processing
-2. **Denoising** (CleanUNet) — removes tape hiss, vinyl surface noise and harmonic distortion
-3. **Bandwidth extension** (AudioSR) — reconstructs high-frequency content lost in 78rpm recording
-4. **Loudness normalisation** (EBU R128) — delivers consistent, broadcast-ready levels
-
-Processing takes ~20 minutes per track on CPU, ~1–2 minutes with a GPU.
-
-**Open source** · [GitHub](https://github.com/jackyckma/elcristal) · Free for the tango community
+            f"""
+<div class="ec-footer">
+Created by <a href="http://www.linkedin.com/in/jackyma" target="_blank">Jacky Ma</a> ·
+Blog: <a href="http://jackyma.info" target="_blank">jackyma.info</a> ·
+Last update: {today}
+</div>
 """
         )
 
@@ -414,6 +488,7 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=port,
         show_error=True,
+        show_api=False,
         # Gradio serves downloadable files via its cache and blocks paths outside
         # cwd/tmp unless explicitly allowlisted.
         allowed_paths=[str(config.OUTPUT_DIR)],
