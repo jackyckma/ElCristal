@@ -522,6 +522,7 @@ ElCristal currently uses a four-stage restoration flow:
 <div class="ec-footer">
 Created by <a href="http://www.linkedin.com/in/jackyma" target="_blank">Jacky Ma</a> ·
 Blog: <a href="http://jackyma.info" target="_blank">jackyma.info</a> ·
+GitHub: <a href="https://github.com/jackyckma/ElCristal" target="_blank">jackyckma/ElCristal</a> ·
 Last update: {today}
 </div>
 """
