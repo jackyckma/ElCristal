@@ -13,8 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # PyTorch stack (CPU build; for GPU images override the index URL at build time).
+RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
 # torchaudio may rely on torchcodec for audio encoding in newer versions.
-RUN pip install --no-cache-dir torch torchaudio torchcodec --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torchcodec
 
 # Web + worker Python dependencies, deduplicated transparently by pip.
 # AudioSR pins numpy<=1.23.5 which conflicts with the rest of the modern stack,
