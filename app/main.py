@@ -343,58 +343,103 @@ def _ready_outputs(track_states: list[dict]) -> list[str] | None:
 def build_ui() -> gr.Blocks:
     tango_css = """
     :root {
-      --ec-bg: #141112;
-      --ec-surface: #201819;
-      --ec-surface-2: #2a1f20;
-      --ec-accent: #b88a44;
-      --ec-text: #f3e8d4;
-      --ec-text-soft: #d8c8ad;
+      --ec-bg: #f8f5f0;
+      --ec-paper: #ffffff;
+      --ec-ink: #1f2329;
+      --ec-ink-soft: #535b66;
+      --ec-border: #e3ddd2;
+      --ec-brand: #7d1f24;
+      --ec-brand-2: #b43f32;
+      --ec-shadow: 0 10px 30px rgba(40, 22, 18, 0.08);
     }
 
     body, .gradio-container {
       background:
-        radial-gradient(circle at 10% 10%, rgba(184, 138, 68, 0.10), transparent 35%),
-        radial-gradient(circle at 90% 20%, rgba(110, 35, 38, 0.16), transparent 45%),
+        radial-gradient(circle at 0% 0%, rgba(180, 63, 50, 0.08), transparent 30%),
+        radial-gradient(circle at 100% 0%, rgba(125, 31, 36, 0.08), transparent 35%),
         var(--ec-bg) !important;
-      color: var(--ec-text) !important;
+      color: var(--ec-ink) !important;
+    }
+
+    .gradio-container {
+      max-width: 1120px !important;
+      margin: 0 auto;
+      padding-top: 1rem !important;
+    }
+
+    .ec-hero {
+      background: linear-gradient(150deg, #fffdf8, #fff7ef);
+      border: 1px solid var(--ec-border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem 0.25rem 1.1rem;
+      box-shadow: var(--ec-shadow);
+      margin-bottom: 0.8rem;
+    }
+
+    .ec-hero h1 {
+      margin-bottom: 0.5rem !important;
+      color: #271b1d !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.2px;
+    }
+
+    .ec-hero p {
+      color: var(--ec-ink-soft) !important;
+      margin-top: 0.4rem !important;
     }
 
     .gradio-container .gr-block,
     .gradio-container .gr-box,
     .gradio-container .gr-panel {
-      background: var(--ec-surface);
-      border-color: #3a2b2c !important;
+      background: var(--ec-paper) !important;
+      border-color: var(--ec-border) !important;
+      box-shadow: var(--ec-shadow);
     }
 
-    .gradio-container h1, .gradio-container h2, .gradio-container h3 {
-      color: var(--ec-text);
+    .ec-card {
+      border: 1px solid var(--ec-border);
+      border-radius: 12px;
+      padding: 0.6rem;
+      background: var(--ec-paper);
+      box-shadow: var(--ec-shadow);
     }
 
-    .gradio-container p, .gradio-container li {
-      color: var(--ec-text-soft);
+    .ec-side-card textarea {
+      min-height: 240px !important;
     }
 
     button.primary {
-      background: linear-gradient(135deg, #7d1f24, #b33b2f) !important;
-      border: 1px solid #d07d53 !important;
-      color: #fff7eb !important;
+      background: linear-gradient(135deg, var(--ec-brand), var(--ec-brand-2)) !important;
+      border: 1px solid #8f2a2b !important;
+      color: #fffaf4 !important;
+      font-weight: 600 !important;
+    }
+
+    button.primary:hover {
+      filter: brightness(1.03);
     }
 
     .ec-footer {
-      margin-top: 0.8rem;
-      padding-top: 0.7rem;
-      border-top: 1px solid #4a3839;
-      font-size: 0.95rem;
-      color: var(--ec-text-soft);
+      margin-top: 0.9rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--ec-border);
+      font-size: 0.94rem;
+      color: var(--ec-ink-soft);
     }
 
     .ec-footer a {
-      color: #e3b267 !important;
+      color: #8f2a2b !important;
       text-decoration: none;
+      font-weight: 600;
     }
 
     .ec-footer a:hover {
       text-decoration: underline;
+    }
+
+    /* Hide built-in Gradio footer controls; we provide our own footer info. */
+    footer {
+      display: none !important;
     }
     """
 
@@ -406,18 +451,22 @@ def build_ui() -> gr.Blocks:
         today = date.today().isoformat()
         gr.Markdown(
             f"""
-# ElCristal — Tango Audio Restoration
-
-Restore golden-age tango recordings (1930s-1950s) with a restoration pipeline
-designed to reduce noise while preserving musical character and emotional texture.
-
-Upload one or more tracks. The page will stay open while your files are processed
-and offer them as direct downloads when ready. **No email required.**
+<div class="ec-hero">
+<h1>ElCristal — Tango Audio Restoration</h1>
+<p>
+Restore golden-age tango recordings (1930s-1950s) with an AI pipeline designed to reduce hiss,
+crackle, and noise while preserving musical character and emotional texture.
+</p>
+<p>
+Upload one or more tracks. The page stays open while processing and gives direct downloads when done.
+<strong>No email required.</strong>
+</p>
+</div>
 """
         )
 
-        with gr.Row():
-            with gr.Column(scale=2):
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=2, elem_classes=["ec-card"]):
                 file_input = gr.File(
                     label="Audio files (MP3 / WAV / FLAC)",
                     file_count="multiple",
@@ -430,7 +479,7 @@ and offer them as direct downloads when ready. **No email required.**
                 )
                 submit_btn = gr.Button("Restore my tracks", variant="primary")
 
-            with gr.Column(scale=1):
+            with gr.Column(scale=1, elem_classes=["ec-card", "ec-side-card"]):
                 status_output = gr.Textbox(
                     label="Status",
                     lines=10,
