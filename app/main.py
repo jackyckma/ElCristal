@@ -414,4 +414,7 @@ if __name__ == "__main__":
         server_name="0.0.0.0",
         server_port=port,
         show_error=True,
+        # Gradio serves downloadable files via its cache and blocks paths outside
+        # cwd/tmp unless explicitly allowlisted.
+        allowed_paths=[str(config.OUTPUT_DIR)],
     )
